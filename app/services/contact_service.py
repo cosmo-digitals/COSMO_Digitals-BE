@@ -1,9 +1,13 @@
+from datetime import datetime
 from app.database.mongodb import get_db
 from app.schemas.contact import ContactCreate
-from app.utils.email_utils import send_contact_email
 
-async def save_contact(contact: ContactCreate) -> str:
+async def save_contact(data: ContactCreate) -> str:
+    """
+    Persist a contact in MongoDB and return the inserted id as a string.
+    """
     db = get_db()
-    result = await db.contacts.insert_one(contact.model_dump())
-    await send_contact_email(contact)        # fire‑and‑forget
+    payload = data.dict()
+    payload["created_at"] = datetime.utcnow()  # ✅ Add timestamp
+    result = await db["contacts"].insert_one(payload)
     return str(result.inserted_id)
